@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
-  build-test:
+  build-test-push:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,5 +29,11 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
       - name: Build Docker image
-        run: docker build -t calculator-app:ci .
+        run: docker build -t ghcr.io/${{ github.repository }}/calculator-api:${{ github.sha }} .
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository }}/calculator-api:${{ github.sha }}
